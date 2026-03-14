@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   UseGuards,
+  Delete,
 } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
@@ -35,11 +36,18 @@ export class OrganizationsController {
     return this.organizationsService.findOne(id);
   }
 
+  @Roles(UserRole.SUPER_ADMIN)
   @Patch(':id')
   update(
     @Param('id') id: string,
     @Body() updateOrganizationDto: UpdateOrganizationDto,
   ) {
     return this.organizationsService.update(id, updateOrganizationDto);
+  }
+
+  @Roles(UserRole.SUPER_ADMIN)
+  @Delete(':id')
+  delete(@Param('id') id: string) {
+    return this.organizationsService.deactivate(id);
   }
 }

@@ -7,7 +7,7 @@ import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { Organization } from './entities/organization.entity';
+import { Organization, OrgStatus } from './entities/organization.entity';
 import { User } from 'src/users/entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { UserRole } from 'src/auth/constants/role.constants';
@@ -88,5 +88,16 @@ export class OrganizationsService {
     const org = await this.findOne(id);
     const updated = this.repo.merge(org, updateOrgDto);
     return await this.repo.save(updated);
+  }
+
+  async deactivate(id: string) {
+    const org = await this.repo.findOne({
+      where: { id },
+    });
+
+    if (!org) throw new NotFoundException();
+
+    org.status = OrgStatus.INACTIVE;
+    return await this.repo.save(org);
   }
 }
