@@ -7,6 +7,7 @@ import {
   Param,
   UseGuards,
   Delete,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
@@ -26,8 +27,11 @@ export class OrganizationsController {
 
   @Roles(UserRole.SUPER_ADMIN)
   @Post()
-  create(@Body() createOrganizationDto: CreateOrganizationDto) {
-    return this.organizationsService.create(createOrganizationDto);
+  create(
+    @GetUser() authUser: ActiveUser,
+    @Body() createOrganizationDto: CreateOrganizationDto,
+  ) {
+    return this.organizationsService.create(authUser, createOrganizationDto);
   }
 
   @Get()
@@ -43,16 +47,29 @@ export class OrganizationsController {
   @Roles(UserRole.SUPER_ADMIN)
   @Patch(':id')
   update(
+    @GetUser() authUser: ActiveUser,
     @Param('id') id: string,
     @Body() updateOrganizationDto: UpdateOrganizationDto,
   ) {
-    return this.organizationsService.update(id, updateOrganizationDto);
+    return this.organizationsService.update(
+      authUser,
+      id,
+      updateOrganizationDto,
+    );
   }
 
   @Roles(UserRole.SUPER_ADMIN)
+  @Patch(':id/deactivate')
+  deactivate(@GetUser() authUser: ActiveUser, @Param('id') id: string) {
+    return this.organizationsService.deactivate(authUser, id);
+  }
+
   @Delete(':id')
-  delete(@Param('id') id: string) {
-    return this.organizationsService.deactivate(id);
+  remove(
+    @GetUser() authUser: ActiveUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.organizationsService.remove(authUser, id);
   }
 
   @Patch(':id/transfer-ownership')

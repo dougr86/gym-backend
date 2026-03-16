@@ -1,12 +1,7 @@
+import { AuditableEntity } from 'src/common/base.entity';
+import { Location } from 'src/locations/entities/location.entity';
 import { User } from 'src/users/entities/user.entity';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  OneToMany,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 
 export enum OrgStatus {
   ACTIVE = 'active',
@@ -23,7 +18,7 @@ export enum OrgPlan {
 }
 
 @Entity('organizations')
-export class Organization {
+export class Organization extends AuditableEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -75,13 +70,10 @@ export class Organization {
   @Column({ name: 'tax_id', nullable: true })
   taxId: string;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
-
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
-
   // We define this relationship so we can see all users belonging to an Org
   @OneToMany(() => User, (user) => user.organization)
   users: User[];
+
+  @OneToMany(() => Location, (location) => location.organization)
+  locations: Location[];
 }

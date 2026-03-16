@@ -1,5 +1,6 @@
 import { Exclude, Expose } from 'class-transformer';
 import { UserRole } from 'src/auth/constants/role.constants';
+import { AuditableEntity } from 'src/common/base.entity';
 import { Organization } from 'src/organizations/entities/organization.entity';
 import {
   Entity,
@@ -7,8 +8,6 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
 } from 'typeorm';
 
 export enum UserStatus {
@@ -18,7 +17,7 @@ export enum UserStatus {
 }
 
 @Entity('users')
-export class User {
+export class User extends AuditableEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -89,12 +88,4 @@ export class User {
 
   @Column({ name: 'last_login_at', type: 'timestamp', nullable: true })
   lastLoginAt: Date;
-
-  // Automatically set when the record is created
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
-
-  // Automatically updated every time you call save() on the entity
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
 }

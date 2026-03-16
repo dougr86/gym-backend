@@ -23,11 +23,12 @@ export class OrganizationsService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(createOrgDto: CreateOrganizationDto) {
+  async create(authUser: ActiveUser, createOrgDto: CreateOrganizationDto) {
     const { owner, ...orgData } = createOrgDto;
 
     const existing = await this.repo.findOne({
       where: { name: orgData.name },
+      withDeleted: true,
     });
 
     if (existing) {
@@ -39,7 +40,11 @@ export class OrganizationsService {
     await queryRunner.startTransaction();
 
     try {
-      const org = queryRunner.manager.create(Organization, orgData);
+      const org = queryRunner.manager.create(Organization, {
+        ...orgData,
+        createdBy: authUser.userId,
+        updatedBy: authUser.userId,
+      });
       const savedOrg = await queryRunner.manager.save(org);
 
       const existingUser = await queryRunner.manager.findOne(User, {
@@ -67,6 +72,8 @@ export class OrganizationsService {
         password: hashedPassword,
         role: UserRole.OWNER,
         organization: savedOrg, // Link them here!
+        createdBy: authUser.userId,
+        updatedBy: authUser.userId,
       });
 
       await queryRunner.manager.save(newUser);
@@ -99,13 +106,20 @@ export class OrganizationsService {
     return org;
   }
 
-  async update(id: string, updateOrgDto: UpdateOrganizationDto) {
+  async update(
+    authUser: ActiveUser,
+    id: string,
+    updateOrgDto: UpdateOrganizationDto,
+  ) {
     const org = await this.findOne(id);
-    const updated = this.repo.merge(org, updateOrgDto);
+    const updated = this.repo.merge(org, {
+      ...updateOrgDto,
+      updatedBy: authUser.userId,
+    });
     return await this.repo.save(updated);
   }
 
-  async deactivate(id: string) {
+  async deactivate(authUser: ActiveUser, id: string) {
     const org = await this.repo.findOne({
       where: { id },
     });
@@ -113,7 +127,18 @@ export class OrganizationsService {
     if (!org) throw new NotFoundException();
 
     org.status = OrgStatus.INACTIVE;
+    org.updatedBy = authUser.userId;
     return await this.repo.save(org);
+  }
+
+  async remove(authUser: ActiveUser, id: string) {
+    const org = await this.findOne(id);
+
+    org.deletedBy = authUser.userId;
+
+    // This sets deleted_at.
+    // It won't appear in future .find() calls unless { withDeleted: true } is used.
+    return await this.repo.softRemove(org);
   }
 
   async transferOwnership(
@@ -169,10 +194,12 @@ export class OrganizationsService {
       // Promote the New Owner
       newOwner.role = UserRole.OWNER;
       newOwner.status = UserStatus.ACTIVE;
+      newOwner.updatedBy = authUser.userId;
 
       // Demote the Current Owner
       // Set the new role (default to ADMIN)
       oldOwner.role = newRoleForOldOwner || UserRole.ADMIN;
+      oldOwner.updatedBy = authUser.userId;
 
       // If deactivation is requested, flip the status
       if (shouldDeactivate) {
