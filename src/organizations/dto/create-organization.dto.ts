@@ -6,6 +6,7 @@ import {
   MinLength,
   ValidateNested,
   IsISO31661Alpha2,
+  Length,
 } from 'class-validator';
 import { CreateOwnerDto } from './create-owner.dto';
 
@@ -23,6 +24,15 @@ export class CreateOrganizationDto {
   @IsISO31661Alpha2()
   @IsNotEmpty()
   countryCode: string;
+
+  @IsString()
+  @IsOptional()
+  taxId?: string;
+
+  @IsString()
+  @Length(3, 3)
+  @IsOptional()
+  currency?: string = 'USD';
 
   // Optional Organization Address fields
   @IsString() @IsOptional() addressLine1?: string;

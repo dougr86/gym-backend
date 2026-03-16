@@ -15,6 +15,13 @@ export enum OrgStatus {
   TRIAL = 'trial',
 }
 
+export enum OrgPlan {
+  FREE = 'free',
+  PLUS = 'plus',
+  PRO = 'pro',
+  ENTERPRISE = 'enterprise',
+}
+
 @Entity('organizations')
 export class Organization {
   @PrimaryGeneratedColumn('uuid')
@@ -55,6 +62,18 @@ export class Organization {
 
   @Column({ name: 'postal_code', nullable: true })
   postalCode: string;
+
+  @Column({ length: 3, default: 'USD' })
+  currency: string;
+
+  @Column({
+    type: 'varchar',
+    default: OrgPlan.FREE,
+  })
+  plan: OrgPlan;
+
+  @Column({ name: 'tax_id', nullable: true })
+  taxId: string;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

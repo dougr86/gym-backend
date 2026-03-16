@@ -35,6 +35,9 @@ export class User {
   @Column({ type: 'enum', enum: UserStatus, default: UserStatus.ACTIVE })
   status: UserStatus;
 
+  @Column({ name: 'government_id', nullable: true })
+  governmentId: string;
+
   @Column({ name: 'first_name' })
   firstName: string;
 
