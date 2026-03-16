@@ -5,8 +5,9 @@ import {
   IsOptional,
   MinLength,
   ValidateNested,
+  IsISO31661Alpha2,
 } from 'class-validator';
-import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { CreateOwnerDto } from './create-owner.dto';
 
 export class CreateOrganizationDto {
   @IsString()
@@ -18,8 +19,20 @@ export class CreateOrganizationDto {
   @IsOptional()
   description?: string;
 
-  @ValidateNested()
-  @Type(() => CreateUserDto)
+  // New: ISO Country Code (e.g., 'CR', 'US')
+  @IsISO31661Alpha2()
   @IsNotEmpty()
-  owner: CreateUserDto;
+  countryCode: string;
+
+  // Optional Organization Address fields
+  @IsString() @IsOptional() addressLine1?: string;
+  @IsString() @IsOptional() addressLine2?: string;
+  @IsString() @IsOptional() city?: string;
+  @IsString() @IsOptional() stateProvince?: string;
+  @IsString() @IsOptional() postalCode?: string;
+
+  @ValidateNested()
+  @Type(() => CreateOwnerDto)
+  @IsNotEmpty()
+  owner: CreateOwnerDto;
 }

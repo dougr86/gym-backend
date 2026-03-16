@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -8,9 +9,11 @@ import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Organization, OrgStatus } from './entities/organization.entity';
-import { User } from 'src/users/entities/user.entity';
+import { User, UserStatus } from 'src/users/entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { UserRole } from 'src/auth/constants/role.constants';
+import { TransferOwnershipDto } from './dto/transfer-ownership.dto';
+import { ActiveUser } from 'src/auth/interfaces/active-user.interface';
 
 @Injectable()
 export class OrganizationsService {
@@ -46,9 +49,21 @@ export class OrganizationsService {
         throw new ConflictException('A user with this email already exists');
       }
 
+      const ownerAddress = owner.useOrgAddress
+        ? {
+            countryCode: savedOrg.countryCode,
+            addressLine1: savedOrg.addressLine1,
+            addressLine2: savedOrg.addressLine2,
+            city: savedOrg.city,
+            stateProvince: savedOrg.stateProvince,
+            postalCode: savedOrg.postalCode,
+          }
+        : {};
+
       const hashedPassword = await bcrypt.hash(owner.password, 10);
       const newUser = queryRunner.manager.create(User, {
         ...owner,
+        ...ownerAddress,
         password: hashedPassword,
         role: UserRole.OWNER,
         organization: savedOrg, // Link them here!
@@ -99,5 +114,85 @@ export class OrganizationsService {
 
     org.status = OrgStatus.INACTIVE;
     return await this.repo.save(org);
+  }
+
+  async transferOwnership(
+    authUser: ActiveUser,
+    orgId: string,
+    dto: TransferOwnershipDto,
+  ) {
+    const { newOwnerId, newRoleForOldOwner, shouldDeactivate } = dto;
+
+    if (authUser.userId === newOwnerId) {
+      throw new BadRequestException(
+        'You cannot transfer ownership to yourself.',
+      );
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // We search for a user in this org who currently has the OWNER role
+      const oldOwner = await queryRunner.manager.findOne(User, {
+        where: {
+          organization: { id: orgId },
+          role: UserRole.OWNER,
+        },
+      });
+
+      if (!oldOwner) {
+        throw new NotFoundException(
+          'Current owner for this organization not found.',
+        );
+      }
+
+      // Getting New Owner (Must be in the same Org)
+      const newOwner = await queryRunner.manager.findOne(User, {
+        where: { id: newOwnerId },
+        relations: ['organization'],
+      });
+
+      if (!newOwner) {
+        throw new NotFoundException(
+          `User with ID ${newOwnerId} does not exist.`,
+        );
+      }
+
+      if (newOwner.organization?.id !== orgId) {
+        throw new BadRequestException(
+          'The new owner must be a member of this organization.',
+        );
+      }
+
+      // Promote the New Owner
+      newOwner.role = UserRole.OWNER;
+      newOwner.status = UserStatus.ACTIVE;
+
+      // Demote the Current Owner
+      // Set the new role (default to ADMIN)
+      oldOwner.role = newRoleForOldOwner || UserRole.ADMIN;
+
+      // If deactivation is requested, flip the status
+      if (shouldDeactivate) {
+        oldOwner.status = UserStatus.INACTIVE;
+      }
+
+      await queryRunner.manager.save([newOwner, oldOwner]);
+
+      await queryRunner.commitTransaction();
+
+      return {
+        message: shouldDeactivate
+          ? 'Ownership transferred and your account deactivated.'
+          : `Ownership transferred. Your new role is ${oldOwner.role}.`,
+      };
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

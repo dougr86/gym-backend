@@ -5,6 +5,8 @@ import {
   IsEnum,
   IsOptional,
   IsUUID,
+  IsISO31661Alpha2,
+  IsPhoneNumber,
 } from 'class-validator';
 import { UserRole } from 'src/auth/constants/role.constants';
 
@@ -33,4 +35,19 @@ export class CreateUserDto {
   @IsUUID()
   @IsOptional() // Optional because the Service might provide it via authUser
   organizationId?: string;
+
+  // New: Specific user country and phone
+  @IsISO31661Alpha2()
+  @IsOptional()
+  countryCode?: string;
+
+  @IsPhoneNumber()
+  @IsOptional()
+  phoneNumber?: string; // Expects E.164 format like '+50688888888'
+
+  @IsString() @IsOptional() addressLine1?: string;
+  @IsString() @IsOptional() addressLine2?: string;
+  @IsString() @IsOptional() city?: string;
+  @IsString() @IsOptional() stateProvince?: string;
+  @IsString() @IsOptional() postalCode?: string;
 }
