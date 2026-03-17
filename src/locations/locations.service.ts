@@ -4,13 +4,13 @@ import { UpdateLocationDto } from './dto/update-location.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ActiveUser } from 'src/auth/interfaces/active-user.interface';
-import { Location } from './entities/location.entity';
+import { LocationEntity } from './entities/location.entity';
 
 @Injectable()
 export class LocationsService {
   constructor(
-    @InjectRepository(Location)
-    private readonly locationsRepository: Repository<Location>,
+    @InjectRepository(LocationEntity)
+    private readonly locationsRepository: Repository<LocationEntity>,
   ) {}
 
   async create(authUser: ActiveUser, createLocationDto: CreateLocationDto) {

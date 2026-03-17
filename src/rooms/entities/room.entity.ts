@@ -1,5 +1,5 @@
-import { AuditableEntity } from 'src/common/base.entity';
-import { Location } from 'src/locations/entities/location.entity';
+import { AuditableEntity } from 'src/common/auditable.entity';
+import { LocationEntity } from 'src/locations/entities/location.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 
 @Entity('rooms')
-export class Room extends AuditableEntity {
+export class RoomEntity extends AuditableEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -27,11 +27,11 @@ export class Room extends AuditableEntity {
   isActive: boolean;
 
   // Each Room belongs to exactly one Location
-  @ManyToOne(() => Location, (location) => location.rooms, {
+  @ManyToOne(() => LocationEntity, (location) => location.rooms, {
     onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'location_id' })
-  location: Location;
+  location: LocationEntity;
 
   @Column({ name: 'location_id' })
   locationId: string;

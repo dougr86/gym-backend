@@ -11,14 +11,14 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { TenantHealthGuard } from './guards/tenant-health.guard';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Organization } from 'src/organizations/entities/organization.entity';
-import { User } from 'src/users/entities/user.entity';
+import { OrganizationEntity } from 'src/organizations/entities/organization.entity';
+import { UserEntity } from 'src/users/entities/user.entity';
 
 @Module({
   imports: [
     ConfigModule,
     forwardRef(() => UsersModule),
-    TypeOrmModule.forFeature([User, Organization]),
+    TypeOrmModule.forFeature([UserEntity, OrganizationEntity]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],

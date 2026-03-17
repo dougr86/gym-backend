@@ -8,6 +8,7 @@ import {
   UseGuards,
   Patch,
   Delete,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -20,11 +21,11 @@ import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 @UseGuards(RolesGuard)
-@Roles(UserRole.ADMIN)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
+  @Roles(UserRole.ASSISTANT)
   async create(
     @GetUser() authUser: ActiveUser,
     @Body() userData: CreateUserDto,
@@ -46,22 +47,37 @@ export class UsersController {
     return user;
   }
 
+  @Roles(UserRole.ASSISTANT)
   @Get()
   async findAll(@GetUser() authUser: ActiveUser) {
     return await this.usersService.findAll(authUser);
   }
 
+  @Roles(UserRole.ASSISTANT)
   @Patch(':id')
   async update(
     @GetUser() authUser: ActiveUser,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() userData: UpdateUserDto,
   ) {
     return await this.usersService.update(authUser, id, userData);
   }
 
+  @Roles(UserRole.ASSISTANT)
   @Delete(':id')
-  async deactivate(@GetUser() authUser: ActiveUser, @Param('id') id: string) {
+  async delete(
+    @GetUser() authUser: ActiveUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return await this.usersService.remove(authUser, id);
+  }
+
+  @Roles(UserRole.ASSISTANT)
+  @Patch(':id/deactivate')
+  async deactivate(
+    @GetUser() authUser: ActiveUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return await this.usersService.deactivate(authUser, id);
   }
 }

@@ -9,7 +9,7 @@ import { Reflector } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OrgStatus } from '../../organizations/entities/organization.entity';
-import { User, UserStatus } from '../../users/entities/user.entity';
+import { UserEntity, UserStatus } from '../../users/entities/user.entity';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { Request } from 'express';
 import { ActiveUser } from '../interfaces/active-user.interface';
@@ -20,7 +20,7 @@ import { SKIP_SUBSCRIPTION_KEY } from '../decorators/skip-subscription.decorator
 export class TenantHealthGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
-    @InjectRepository(User) private userRepo: Repository<User>,
+    @InjectRepository(UserEntity) private userRepo: Repository<UserEntity>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

@@ -5,20 +5,19 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, FindOneOptions, Repository } from 'typeorm';
-import { User, UserStatus } from './entities/user.entity';
+import { FindOneOptions, Repository } from 'typeorm';
+import { UserEntity, UserStatus } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ActiveUser } from 'src/auth/interfaces/active-user.interface';
 import { UserRole } from 'src/auth/constants/role.constants';
-import { Organization } from 'src/organizations/entities/organization.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    @InjectRepository(UserEntity)
+    private usersRepository: Repository<UserEntity>,
   ) {}
 
   // Used by Admin/Assistant to register a new member
@@ -29,26 +28,29 @@ export class UsersService {
 
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(userData.password, salt);
-    const userPayload: DeepPartial<User> = {
+    const email = userData.email.toLowerCase();
+
+    const user = this.usersRepository.create({
       ...userData,
+      email,
       password: hashedPassword,
-    };
+      createdBy: authUser.userId,
+      updatedBy: authUser.userId,
+    });
 
-    if (authUser.role !== UserRole.SUPER_ADMIN) {
-      userPayload.organization = { id: authUser.organizationId };
-    } else if (userData.organizationId) {
-      userPayload.organization = { id: userData.organizationId };
-    }
+    user.organizationId =
+      authUser.role === UserRole.SUPER_ADMIN && userData.organizationId
+        ? userData.organizationId
+        : authUser.organizationId;
 
-    const user = this.usersRepository.create(userPayload);
     return await this.usersRepository.save(user);
   }
 
   async findOne(authUser: ActiveUser, id: string) {
-    const queryOptions: FindOneOptions<User> = {
+    const queryOptions: FindOneOptions<UserEntity> = {
       where: { id },
       relations: ['organization'],
-      select: ['id', 'email', 'password', 'role'], // Add password for login comparison
+      select: ['id', 'email', 'role'],
     };
 
     if (authUser.role !== UserRole.SUPER_ADMIN) {
@@ -60,15 +62,15 @@ export class UsersService {
 
     const user = await this.usersRepository.findOne(queryOptions);
 
-    if (!user && authUser) {
-      throw new NotFoundException(`User not found in your organization`);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
     }
 
     return user;
   }
 
   async findOneByEmailInternal(email: string) {
-    const queryOptions: FindOneOptions<User> = {
+    const queryOptions: FindOneOptions<UserEntity> = {
       where: { email },
       relations: ['organization'],
       select: ['id', 'email', 'password', 'role'], // Add password for login comparison
@@ -87,10 +89,10 @@ export class UsersService {
 
   // Find user by email for the login process later
   async findOneByEmail(authUser: ActiveUser, email: string) {
-    const queryOptions: FindOneOptions<User> = {
+    const queryOptions: FindOneOptions<UserEntity> = {
       where: { email },
       relations: ['organization'],
-      select: ['id', 'email', 'password', 'role'], // Add password for login comparison
+      select: ['id', 'email', 'role'],
     };
 
     if (authUser.role !== UserRole.SUPER_ADMIN) {
@@ -125,10 +127,6 @@ export class UsersService {
   async update(authUser: ActiveUser, id: string, updateUserDto: UpdateUserDto) {
     const user = await this.findOne(authUser, id);
 
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
-
     // If the authUser is not a Super Admin, they cannot change roles to Super Admin
     if (
       authUser.role !== UserRole.SUPER_ADMIN &&
@@ -144,10 +142,19 @@ export class UsersService {
 
     // Hard-lock the organization again just in case the DTO tried to change it
     if (authUser.role !== UserRole.SUPER_ADMIN) {
-      user.organization = { id: authUser.organizationId } as Organization;
+      user.organizationId = authUser.organizationId;
     }
 
     return await this.usersRepository.save(user);
+  }
+
+  async remove(authUser: ActiveUser, id: string) {
+    const user = await this.findOne(authUser, id);
+
+    // Track who did it
+    user.deletedBy = authUser.userId;
+
+    return await this.usersRepository.softRemove(user);
   }
 
   async deactivate(authUser: ActiveUser, id: string) {
@@ -167,6 +174,7 @@ export class UsersService {
     }
 
     user.status = UserStatus.INACTIVE; // or 'inactive'
+    user.updatedBy = authUser.userId;
     return await this.usersRepository.save(user);
   }
 }

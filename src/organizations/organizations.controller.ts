@@ -21,7 +21,7 @@ import { TransferOwnershipDto } from './dto/transfer-ownership.dto';
 import type { ActiveUser } from 'src/auth/interfaces/active-user.interface';
 
 @Controller('organizations')
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class OrganizationsController {
   constructor(private readonly organizationsService: OrganizationsService) {}
 
@@ -31,7 +31,16 @@ export class OrganizationsController {
     @GetUser() authUser: ActiveUser,
     @Body() createOrganizationDto: CreateOrganizationDto,
   ) {
-    return this.organizationsService.create(authUser, createOrganizationDto);
+    return this.organizationsService.create(createOrganizationDto, authUser);
+  }
+
+  // Will be public one we have the subscription feature
+  @Roles(UserRole.SUPER_ADMIN)
+  //@Public()
+  @Post('signup')
+  selfSignup(@Body() createOrganizationDto: CreateOrganizationDto) {
+    // Pass undefined for authUser -> Service will use 'SELF_SIGNUP'
+    return this.organizationsService.create(createOrganizationDto);
   }
 
   @Get()
@@ -40,7 +49,7 @@ export class OrganizationsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.organizationsService.findOne(id);
   }
 
@@ -48,7 +57,7 @@ export class OrganizationsController {
   @Patch(':id')
   update(
     @GetUser() authUser: ActiveUser,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateOrganizationDto: UpdateOrganizationDto,
   ) {
     return this.organizationsService.update(
@@ -60,10 +69,14 @@ export class OrganizationsController {
 
   @Roles(UserRole.SUPER_ADMIN)
   @Patch(':id/deactivate')
-  deactivate(@GetUser() authUser: ActiveUser, @Param('id') id: string) {
+  deactivate(
+    @GetUser() authUser: ActiveUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.organizationsService.deactivate(authUser, id);
   }
 
+  @Roles(UserRole.SUPER_ADMIN)
   @Delete(':id')
   remove(
     @GetUser() authUser: ActiveUser,
@@ -72,12 +85,13 @@ export class OrganizationsController {
     return this.organizationsService.remove(authUser, id);
   }
 
+  @Roles(UserRole.OWNER)
   @Patch(':id/transfer-ownership')
   @Roles(UserRole.OWNER)
   @UseGuards(JwtAuthGuard, RolesGuard)
   async transfer(
     @GetUser() authUser: ActiveUser,
-    @Param('id') orgId: string,
+    @Param('id', ParseUUIDPipe) orgId: string,
     @Body() dto: TransferOwnershipDto,
   ) {
     return await this.organizationsService.transferOwnership(

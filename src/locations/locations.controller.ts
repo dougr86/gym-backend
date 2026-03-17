@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { LocationsService } from './locations.service';
 import { CreateLocationDto } from './dto/create-location.dto';
@@ -31,21 +32,27 @@ export class LocationsController {
   }
 
   @Get(':id')
-  findOne(@GetUser() authUser: ActiveUser, @Param('id') id: string) {
+  findOne(
+    @GetUser() authUser: ActiveUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.locationsService.findOne(authUser, id);
   }
 
   @Patch(':id')
   update(
     @GetUser() authUser: ActiveUser,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateLocationDto: UpdateLocationDto,
   ) {
     return this.locationsService.update(authUser, id, updateLocationDto);
   }
 
   @Delete(':id')
-  remove(@GetUser() authUser: ActiveUser, @Param('id') id: string) {
+  remove(
+    @GetUser() authUser: ActiveUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.locationsService.remove(authUser, id);
   }
 }

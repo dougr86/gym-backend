@@ -20,7 +20,7 @@ export class CreateUserDto {
 
   @IsString()
   @IsOptional()
-  govermentId?: string;
+  governmentId?: string;
 
   @IsString()
   @IsOptional()

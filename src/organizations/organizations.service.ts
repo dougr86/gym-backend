@@ -8,8 +8,8 @@ import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { Organization, OrgStatus } from './entities/organization.entity';
-import { User, UserStatus } from 'src/users/entities/user.entity';
+import { OrganizationEntity, OrgStatus } from './entities/organization.entity';
+import { UserEntity, UserStatus } from 'src/users/entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { UserRole } from 'src/auth/constants/role.constants';
 import { TransferOwnershipDto } from './dto/transfer-ownership.dto';
@@ -18,13 +18,16 @@ import { ActiveUser } from 'src/auth/interfaces/active-user.interface';
 @Injectable()
 export class OrganizationsService {
   constructor(
-    @InjectRepository(Organization)
-    private readonly repo: Repository<Organization>,
+    @InjectRepository(OrganizationEntity)
+    private readonly repo: Repository<OrganizationEntity>,
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(authUser: ActiveUser, createOrgDto: CreateOrganizationDto) {
+  async create(createOrgDto: CreateOrganizationDto, authUser?: ActiveUser) {
     const { owner, ...orgData } = createOrgDto;
+
+    // Determine the actor for the audit trail
+    const actorId = authUser?.userId || 'SELF_SIGNUP';
 
     const existing = await this.repo.findOne({
       where: { name: orgData.name },
@@ -40,14 +43,14 @@ export class OrganizationsService {
     await queryRunner.startTransaction();
 
     try {
-      const org = queryRunner.manager.create(Organization, {
+      const org = queryRunner.manager.create(OrganizationEntity, {
         ...orgData,
-        createdBy: authUser.userId,
-        updatedBy: authUser.userId,
+        createdBy: actorId,
+        updatedBy: actorId,
       });
       const savedOrg = await queryRunner.manager.save(org);
 
-      const existingUser = await queryRunner.manager.findOne(User, {
+      const existingUser = await queryRunner.manager.findOne(UserEntity, {
         where: { email: owner.email },
       });
       if (existingUser) {
@@ -66,14 +69,14 @@ export class OrganizationsService {
         : {};
 
       const hashedPassword = await bcrypt.hash(owner.password, 10);
-      const newUser = queryRunner.manager.create(User, {
+      const newUser = queryRunner.manager.create(UserEntity, {
         ...owner,
         ...ownerAddress,
         password: hashedPassword,
         role: UserRole.OWNER,
-        organization: savedOrg, // Link them here!
-        createdBy: authUser.userId,
-        updatedBy: authUser.userId,
+        organization: savedOrg,
+        createdBy: actorId,
+        updatedBy: actorId,
       });
 
       await queryRunner.manager.save(newUser);
@@ -160,7 +163,7 @@ export class OrganizationsService {
 
     try {
       // We search for a user in this org who currently has the OWNER role
-      const oldOwner = await queryRunner.manager.findOne(User, {
+      const oldOwner = await queryRunner.manager.findOne(UserEntity, {
         where: {
           organization: { id: orgId },
           role: UserRole.OWNER,
@@ -174,7 +177,7 @@ export class OrganizationsService {
       }
 
       // Getting New Owner (Must be in the same Org)
-      const newOwner = await queryRunner.manager.findOne(User, {
+      const newOwner = await queryRunner.manager.findOne(UserEntity, {
         where: { id: newOwnerId },
         relations: ['organization'],
       });

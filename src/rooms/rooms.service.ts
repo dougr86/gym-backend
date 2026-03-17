@@ -3,16 +3,17 @@ import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Room } from './entities/room.entity';
+import { RoomEntity } from './entities/room.entity';
 import { ActiveUser } from 'src/auth/interfaces/active-user.interface';
-import { Location } from 'src/locations/entities/location.entity';
+import { LocationEntity } from 'src/locations/entities/location.entity';
 
 @Injectable()
 export class RoomsService {
   constructor(
-    @InjectRepository(Room) private readonly roomsRepository: Repository<Room>,
-    @InjectRepository(Location)
-    private readonly locationsRepository: Repository<Location>,
+    @InjectRepository(RoomEntity)
+    private readonly roomsRepository: Repository<RoomEntity>,
+    @InjectRepository(LocationEntity)
+    private readonly locationsRepository: Repository<LocationEntity>,
   ) {}
 
   async create(authUser: ActiveUser, createRoomDto: CreateRoomDto) {
@@ -101,6 +102,8 @@ export class RoomsService {
 
   async remove(authUser: ActiveUser, id: string) {
     const room = await this.findOne(authUser, id); // Security check
+
+    room.deletedBy = authUser.userId;
 
     // We use softRemove to trigger the BaseEntity's deletedAt and keep history
     return await this.roomsRepository.softRemove(room);

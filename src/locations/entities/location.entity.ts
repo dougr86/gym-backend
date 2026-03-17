@@ -1,6 +1,6 @@
-import { AuditableEntity } from 'src/common/base.entity';
-import { Organization } from 'src/organizations/entities/organization.entity';
-import { Room } from 'src/rooms/entities/room.entity';
+import { AuditableEntity } from 'src/common/auditable.entity';
+import { OrganizationEntity } from 'src/organizations/entities/organization.entity';
+import { RoomEntity } from 'src/rooms/entities/room.entity';
 import {
   Column,
   Entity,
@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 
 @Entity('locations')
-export class Location extends AuditableEntity {
+export class LocationEntity extends AuditableEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -34,14 +34,14 @@ export class Location extends AuditableEntity {
   isActive: boolean;
 
   // Link to Organization
-  @ManyToOne(() => Organization, (org) => org.locations)
+  @ManyToOne(() => OrganizationEntity, (org) => org.locations)
   @JoinColumn({ name: 'organization_id' })
-  organization: Organization;
+  organization: OrganizationEntity;
 
   @Column({ name: 'organization_id' })
   organizationId: string;
 
   // Link to Rooms
-  @OneToMany(() => Room, (room) => room.location)
-  rooms: Room[];
+  @OneToMany(() => RoomEntity, (room) => room.location)
+  rooms: RoomEntity[];
 }

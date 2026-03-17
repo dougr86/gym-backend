@@ -1,6 +1,6 @@
-import { AuditableEntity } from 'src/common/base.entity';
-import { Location } from 'src/locations/entities/location.entity';
-import { User } from 'src/users/entities/user.entity';
+import { AuditableEntity } from 'src/common/auditable.entity';
+import { LocationEntity } from 'src/locations/entities/location.entity';
+import { UserEntity } from 'src/users/entities/user.entity';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 
 export enum OrgStatus {
@@ -18,7 +18,7 @@ export enum OrgPlan {
 }
 
 @Entity('organizations')
-export class Organization extends AuditableEntity {
+export class OrganizationEntity extends AuditableEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -71,9 +71,9 @@ export class Organization extends AuditableEntity {
   taxId: string;
 
   // We define this relationship so we can see all users belonging to an Org
-  @OneToMany(() => User, (user) => user.organization)
-  users: User[];
+  @OneToMany(() => UserEntity, (user) => user.organization)
+  users: UserEntity[];
 
-  @OneToMany(() => Location, (location) => location.organization)
-  locations: Location[];
+  @OneToMany(() => LocationEntity, (location) => location.organization)
+  locations: LocationEntity[];
 }

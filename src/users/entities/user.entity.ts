@@ -1,7 +1,7 @@
 import { Exclude, Expose } from 'class-transformer';
 import { UserRole } from 'src/auth/constants/role.constants';
-import { AuditableEntity } from 'src/common/base.entity';
-import { Organization } from 'src/organizations/entities/organization.entity';
+import { AuditableEntity } from 'src/common/auditable.entity';
+import { OrganizationEntity } from 'src/organizations/entities/organization.entity';
 import {
   Entity,
   Column,
@@ -17,7 +17,7 @@ export enum UserStatus {
 }
 
 @Entity('users')
-export class User extends AuditableEntity {
+export class UserEntity extends AuditableEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -48,9 +48,12 @@ export class User extends AuditableEntity {
     return `${this.firstName} ${this.lastName}`;
   }
 
-  @ManyToOne(() => Organization, (organization) => organization.users)
+  @Column({ name: 'organization_id' })
+  organizationId: string;
+
+  @ManyToOne(() => OrganizationEntity, (organization) => organization.users)
   @JoinColumn({ name: 'organization_id' })
-  organization: Organization;
+  organization: OrganizationEntity;
 
   @Column({ name: 'address_line1', nullable: true })
   addressLine1: string;
