@@ -27,10 +27,6 @@ export class AuthService {
       throw new UnauthorizedException('Your user account is deactivated.');
     }
 
-    if (user.organization?.status === OrgStatus.INACTIVE) {
-      throw new UnauthorizedException('Your Organization is deactivated.');
-    }
-
     if (user.organization && user.organization.status !== OrgStatus.ACTIVE) {
       throw new ForbiddenException(
         `Access denied. This gym's subscription is ${user.organization.status}.`,
@@ -38,28 +34,30 @@ export class AuthService {
     }
 
     const isMatch = await bcrypt.compare(pass, user.password);
-
-    if (isMatch) {
-      const payload = {
-        sub: user.id,
-        email: user.email,
-        role: user.role,
-        org: user.organization.id,
-      };
-      return {
-        access_token: await this.jwtService.signAsync(payload),
-        user: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          fullName: user.fullName,
-          role: user.role,
-          countryCode: user.countryCode,
-        },
-      };
-
-      throw new UnauthorizedException('Invalid Credentials');
+    if (!isMatch) {
+      throw new UnauthorizedException('Invalid credentials');
     }
+
+    await this.usersService.updateLastLogin(user.id);
+
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      org: user.organization.id,
+    };
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+      mustChangePassword: user.mustChangePassword,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        fullName: user.fullName,
+        role: user.role,
+        countryCode: user.countryCode,
+      },
+    };
   }
 }

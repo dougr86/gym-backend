@@ -9,6 +9,8 @@ import {
   Patch,
   Delete,
   ParseUUIDPipe,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -18,19 +20,38 @@ import { UserRole } from 'src/auth/constants/role.constants';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import type { ActiveUser } from 'src/auth/interfaces/active-user.interface';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto } from './dto/change-pass.dto';
+import { Public } from 'src/auth/decorators/public.decorator';
+import { OnboardUserDto } from './dto/onboard-user.dto';
 
 @Controller('users')
 @UseGuards(RolesGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  @Roles(UserRole.ASSISTANT)
+  @Post('manual-create')
+  @Roles(UserRole.SUPER_ADMIN)
   async create(
     @GetUser() authUser: ActiveUser,
     @Body() userData: CreateUserDto,
   ) {
     return await this.usersService.create(authUser, userData);
+  }
+
+  @Post('invite')
+  @Roles(UserRole.ADMIN, UserRole.ASSISTANT)
+  async invite(
+    @GetUser() authUser: ActiveUser,
+    @Body() userData: CreateUserDto,
+  ) {
+    return await this.usersService.inviteUser(authUser, userData);
+  }
+
+  @Public()
+  @Post('onboard')
+  async onboard(@Body() dto: OnboardUserDto) {
+    await this.usersService.completeOnboarding(dto);
+    return { message: 'Account activated successfully. You can now log in.' };
   }
 
   @Get(':email')
@@ -79,5 +100,50 @@ export class UsersController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return await this.usersService.deactivate(authUser, id);
+  }
+
+  @Patch('change-password')
+  async changePassword(
+    @GetUser() authUser: ActiveUser,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    await this.usersService.changePassword(authUser, dto);
+    return { message: 'Password updated successfully' };
+  }
+
+  @Post(':id/resend-invitation')
+  @Roles(UserRole.ADMIN, UserRole.ASSISTANT)
+  async resend(
+    @GetUser() authUser: ActiveUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return await this.usersService.resendInvitation(authUser, id);
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body('email') email: string) {
+    await this.usersService.forgotPassword(email);
+    return; // Returns 200/201 No Content
+  }
+
+  @Public()
+  @Post('reset-password')
+  async resetPassword(
+    @Body('token') token: string,
+    @Body('password') password: string,
+  ) {
+    await this.usersService.resetPasswordWithToken(token, password);
+    return { message: 'Password has been reset' };
+  }
+
+  @Patch(':id/admin-reset-password')
+  @Roles(UserRole.ADMIN, UserRole.ASSISTANT)
+  async adminResetPassword(
+    @GetUser() authUser: ActiveUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return await this.usersService.adminResetPassword(authUser, id);
   }
 }

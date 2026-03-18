@@ -7,6 +7,7 @@ import { OrganizationsModule } from './organizations/organizations.module';
 import { LocationsModule } from './locations/locations.module';
 import { RoomsModule } from './rooms/rooms.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
     OrganizationsModule,
     LocationsModule,
     RoomsModule,
+    MailModule,
   ],
   providers: [
     {

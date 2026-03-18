@@ -14,6 +14,7 @@ export enum UserStatus {
   ACTIVE = 'active',
   PAUSED = 'paused',
   INACTIVE = 'inactive',
+  PENDING = 'pending',
 }
 
 @Entity('users')
@@ -91,4 +92,39 @@ export class UserEntity extends AuditableEntity {
 
   @Column({ name: 'last_login_at', type: 'timestamp', nullable: true })
   lastLoginAt: Date;
+
+  @Column({ name: 'must_change_password', default: false })
+  mustChangePassword: boolean;
+
+  @Column({
+    name: 'invitation_token',
+    type: 'varchar',
+    nullable: true,
+    select: false,
+  })
+  invitationToken: string | null;
+
+  @Column({
+    name: 'invitation_expires_at',
+    type: 'timestamp',
+    nullable: true,
+    select: false,
+  })
+  invitationExpiresAt: Date | null;
+
+  @Column({
+    name: 'reset_password_token',
+    type: 'varchar',
+    nullable: true,
+    select: false,
+  })
+  resetPasswordToken: string | null;
+
+  @Column({
+    name: 'reset_password_expires_at',
+    type: 'timestamp',
+    nullable: true,
+    select: false,
+  })
+  resetPasswordExpiresAt: Date | null;
 }
