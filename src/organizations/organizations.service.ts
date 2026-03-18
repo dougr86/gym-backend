@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -98,7 +99,13 @@ export class OrganizationsService {
     return await this.repo.find();
   }
 
-  async findOne(id: string) {
+  async findOne(authUser: ActiveUser, id: string) {
+    if (
+      authUser.role !== UserRole.SUPER_ADMIN &&
+      id !== authUser.organizationId
+    ) {
+      throw new ForbiddenException('Not your organization to view');
+    }
     const org = await this.repo.findOne({
       where: { id },
       relations: ['users'],
@@ -114,7 +121,7 @@ export class OrganizationsService {
     id: string,
     updateOrgDto: UpdateOrganizationDto,
   ) {
-    const org = await this.findOne(id);
+    const org = await this.findOne(authUser, id);
     const updated = this.repo.merge(org, {
       ...updateOrgDto,
       updatedBy: authUser.userId,
@@ -135,7 +142,7 @@ export class OrganizationsService {
   }
 
   async remove(authUser: ActiveUser, id: string) {
-    const org = await this.findOne(id);
+    const org = await this.findOne(authUser, id);
 
     org.deletedBy = authUser.userId;
 

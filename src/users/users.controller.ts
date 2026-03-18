@@ -54,8 +54,9 @@ export class UsersController {
     return { message: 'Account activated successfully. You can now log in.' };
   }
 
-  @Get(':email')
-  async findOne(
+  @Get('/emails/:email')
+  @Roles(UserRole.ASSISTANT)
+  async findOneByEmail(
     @GetUser() authUser: ActiveUser,
     @Param('email') email: string,
   ) {
@@ -68,8 +69,14 @@ export class UsersController {
     return user;
   }
 
-  @Roles(UserRole.ASSISTANT)
+  @Get(':id')
+  @Roles(UserRole.INSTRUCTOR)
+  async findOne(@GetUser() authUser: ActiveUser, @Param('id') id: string) {
+    return await this.usersService.findOne(authUser, id);
+  }
+
   @Get()
+  @Roles(UserRole.ASSISTANT)
   async findAll(@GetUser() authUser: ActiveUser) {
     return await this.usersService.findAll(authUser);
   }
@@ -84,7 +91,7 @@ export class UsersController {
     return await this.usersService.update(authUser, id, userData);
   }
 
-  @Roles(UserRole.ASSISTANT)
+  @Roles(UserRole.ADMIN)
   @Delete(':id')
   async delete(
     @GetUser() authUser: ActiveUser,
@@ -112,7 +119,7 @@ export class UsersController {
   }
 
   @Post(':id/resend-invitation')
-  @Roles(UserRole.ADMIN, UserRole.ASSISTANT)
+  @Roles(UserRole.ASSISTANT)
   async resend(
     @GetUser() authUser: ActiveUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -139,7 +146,7 @@ export class UsersController {
   }
 
   @Patch(':id/admin-reset-password')
-  @Roles(UserRole.ADMIN, UserRole.ASSISTANT)
+  @Roles(UserRole.ASSISTANT)
   async adminResetPassword(
     @GetUser() authUser: ActiveUser,
     @Param('id', ParseUUIDPipe) id: string,

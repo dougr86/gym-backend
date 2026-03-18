@@ -25,8 +25,8 @@ import type { ActiveUser } from 'src/auth/interfaces/active-user.interface';
 export class OrganizationsController {
   constructor(private readonly organizationsService: OrganizationsService) {}
 
-  @Roles(UserRole.SUPER_ADMIN)
   @Post()
+  @Roles(UserRole.SUPER_ADMIN)
   create(
     @GetUser() authUser: ActiveUser,
     @Body() createOrganizationDto: CreateOrganizationDto,
@@ -34,27 +34,31 @@ export class OrganizationsController {
     return this.organizationsService.create(createOrganizationDto, authUser);
   }
 
+  @Post('signup')
   // Will be public one we have the subscription feature
   @Roles(UserRole.SUPER_ADMIN)
   //@Public()
-  @Post('signup')
   selfSignup(@Body() createOrganizationDto: CreateOrganizationDto) {
     // Pass undefined for authUser -> Service will use 'SELF_SIGNUP'
     return this.organizationsService.create(createOrganizationDto);
   }
 
   @Get()
+  @Roles(UserRole.SUPER_ADMIN)
   findAll() {
     return this.organizationsService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.organizationsService.findOne(id);
+  findOne(
+    @GetUser() authUser: ActiveUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.organizationsService.findOne(authUser, id);
   }
 
-  @Roles(UserRole.SUPER_ADMIN)
   @Patch(':id')
+  @Roles(UserRole.OWNER)
   update(
     @GetUser() authUser: ActiveUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -67,8 +71,8 @@ export class OrganizationsController {
     );
   }
 
-  @Roles(UserRole.SUPER_ADMIN)
   @Patch(':id/deactivate')
+  @Roles(UserRole.SUPER_ADMIN)
   deactivate(
     @GetUser() authUser: ActiveUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -76,8 +80,8 @@ export class OrganizationsController {
     return this.organizationsService.deactivate(authUser, id);
   }
 
-  @Roles(UserRole.SUPER_ADMIN)
   @Delete(':id')
+  @Roles(UserRole.SUPER_ADMIN)
   remove(
     @GetUser() authUser: ActiveUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -85,7 +89,6 @@ export class OrganizationsController {
     return this.organizationsService.remove(authUser, id);
   }
 
-  @Roles(UserRole.OWNER)
   @Patch(':id/transfer-ownership')
   @Roles(UserRole.OWNER)
   @UseGuards(JwtAuthGuard, RolesGuard)
