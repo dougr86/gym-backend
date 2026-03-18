@@ -23,6 +23,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-pass.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { OnboardUserDto } from './dto/onboard-user.dto';
+import { InviteUserDto } from './dto/invite-user.dto';
 
 @Controller('users')
 @UseGuards(RolesGuard)
@@ -39,10 +40,10 @@ export class UsersController {
   }
 
   @Post('invite')
-  @Roles(UserRole.ADMIN, UserRole.ASSISTANT)
+  @Roles(UserRole.ASSISTANT)
   async invite(
     @GetUser() authUser: ActiveUser,
-    @Body() userData: CreateUserDto,
+    @Body() userData: InviteUserDto,
   ) {
     return await this.usersService.inviteUser(authUser, userData);
   }

@@ -1,6 +1,5 @@
 import {
   IsString,
-  IsUUID,
   MinLength,
   IsOptional,
   IsPhoneNumber,
@@ -8,7 +7,7 @@ import {
 } from 'class-validator';
 
 export class OnboardUserDto {
-  @IsUUID()
+  @IsString()
   invitationToken: string;
 
   @IsString()
@@ -17,7 +16,7 @@ export class OnboardUserDto {
 
   @IsString()
   @IsOptional()
-  governmentId?: string;
+  governmentId: string;
 
   @IsISO31661Alpha2()
   @IsOptional()

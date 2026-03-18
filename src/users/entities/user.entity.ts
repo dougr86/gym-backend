@@ -96,6 +96,7 @@ export class UserEntity extends AuditableEntity {
   @Column({ name: 'must_change_password', default: false })
   mustChangePassword: boolean;
 
+  @Exclude()
   @Column({
     name: 'invitation_token',
     type: 'varchar',
@@ -104,6 +105,7 @@ export class UserEntity extends AuditableEntity {
   })
   invitationToken: string | null;
 
+  @Exclude()
   @Column({
     name: 'invitation_expires_at',
     type: 'timestamp',
@@ -112,6 +114,7 @@ export class UserEntity extends AuditableEntity {
   })
   invitationExpiresAt: Date | null;
 
+  @Exclude()
   @Column({
     name: 'reset_password_token',
     type: 'varchar',
@@ -120,6 +123,7 @@ export class UserEntity extends AuditableEntity {
   })
   resetPasswordToken: string | null;
 
+  @Exclude()
   @Column({
     name: 'reset_password_expires_at',
     type: 'timestamp',

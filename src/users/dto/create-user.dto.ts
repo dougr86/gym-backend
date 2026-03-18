@@ -23,12 +23,10 @@ export class CreateUserDto {
   governmentId?: string;
 
   @IsString()
-  @IsOptional()
-  firstName?: string;
+  firstName: string;
 
   @IsString()
-  @IsOptional()
-  lastName?: string;
+  lastName: string;
 
   // We make role optional here because the Service
   // will often force it to 'STUDENT' or 'OWNER'

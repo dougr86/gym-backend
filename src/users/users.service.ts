@@ -16,6 +16,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-pass.dto';
 import { OnboardUserDto } from './dto/onboard-user.dto';
 import { MailService } from 'src/mail/mail.service';
+import { InviteUserDto } from './dto/invite-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -52,8 +53,9 @@ export class UsersService {
     return await this.usersRepository.save(user);
   }
 
-  async inviteUser(authUser: ActiveUser, userData: CreateUserDto) {
-    const ghostPassword = this.generateRandomString(16); // System only
+  async inviteUser(authUser: ActiveUser, userData: InviteUserDto) {
+    // Password is required in the entity, so we create a ghost one
+    const ghostPassword = this.generateRandomString(16);
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(ghostPassword, salt);
 
@@ -114,7 +116,6 @@ export class UsersService {
     const queryOptions: FindOneOptions<UserEntity> = {
       where: { id },
       relations: ['organization'],
-      select: ['id', 'email', 'role'],
     };
 
     if (authUser.role !== UserRole.SUPER_ADMIN) {
@@ -137,7 +138,6 @@ export class UsersService {
     const queryOptions: FindOneOptions<UserEntity> = {
       where: { email },
       relations: ['organization'],
-      select: ['id', 'email', 'password', 'role'], // Add password for login comparison
     };
 
     const user = await this.usersRepository.findOne(queryOptions);

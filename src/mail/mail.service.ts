@@ -41,6 +41,13 @@ export class MailService {
   }
 
   private async send(to: string, subject: string, html: string) {
+    console.log('from', to);
+    console.log('subject', subject);
+    console.log('html', html);
+    const t1 = this.configService.get<string>('MAIL_USER');
+    const t2 = this.configService.get<string>('MAIL_PASS');
+    console.log('MAIL_USER', t1);
+    console.log('MAIL_PASS', t2);
     try {
       await this.transporter.sendMail({
         from: `"Gym Admin" <${this.configService.get('MAIL_USER')}>`,
