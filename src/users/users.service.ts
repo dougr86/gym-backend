@@ -59,12 +59,14 @@ export class UsersService {
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(ghostPassword, salt);
 
+    const token = this.generateRandomString(32);
+
     const user = this.usersRepository.create({
       ...userData,
       email: userData.email.toLowerCase(),
       password: hashedPassword,
       status: UserStatus.PENDING,
-      invitationToken: this.generateRandomString(32),
+      invitationToken: token,
       invitationExpiresAt: this.getExpiryDate(20), // 20 mins
       mustChangePassword: true,
       organizationId: authUser.organizationId,
@@ -75,7 +77,7 @@ export class UsersService {
 
     await this.mailService.sendInvitation(
       savedUser.email,
-      savedUser.invitationToken!,
+      token,
       'Your Gym App', // Replace with authUser.organization.name if loaded
     );
 
@@ -257,16 +259,18 @@ export class UsersService {
       );
     }
 
-    user.invitationToken = this.generateRandomString(32);
-    user.status = UserStatus.PENDING;
-    user.invitationExpiresAt = this.getExpiryDate(20);
-    user.updatedBy = authUser.userId;
+    const newToken = this.generateRandomString(32);
 
-    const savedUser = await this.usersRepository.save(user);
+    await this.usersRepository.update(userId, {
+      status: UserStatus.PENDING,
+      invitationToken: newToken,
+      invitationExpiresAt: this.getExpiryDate(20),
+      updatedBy: authUser.userId,
+    });
 
     await this.mailService.sendInvitation(
-      savedUser.email,
-      savedUser.invitationToken!,
+      user.email,
+      newToken,
       'Your Gym App', // Ideally authUser.organization.name
     );
 
