@@ -1,4 +1,4 @@
-import { AuditableEntity } from 'src/common/auditable.entity';
+import { AuditableEntity } from 'src/common/entities/auditable.entity';
 import { OrganizationEntity } from 'src/organizations/entities/organization.entity';
 import { RoomEntity } from 'src/rooms/entities/room.entity';
 import {

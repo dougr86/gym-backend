@@ -5,6 +5,7 @@ import {
   IsInt,
   Min,
   Max,
+  IsBoolean,
 } from 'class-validator';
 
 export class CreateClassTypeDto {
@@ -25,4 +26,17 @@ export class CreateClassTypeDto {
   @IsString()
   @IsOptional()
   intensity?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  requiresBooking?: boolean = false;
+
+  @IsBoolean()
+  @IsOptional()
+  allowWaitlist?: boolean = false;
+
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  defaultMaxCapacity?: number = 20;
 }

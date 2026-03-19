@@ -1,6 +1,6 @@
 import { Exclude, Expose } from 'class-transformer';
 import { UserRole } from 'src/auth/constants/role.constants';
-import { AuditableEntity } from 'src/common/auditable.entity';
+import { AuditableEntity } from 'src/common/entities/auditable.entity';
 import { OrganizationEntity } from 'src/organizations/entities/organization.entity';
 import {
   Entity,

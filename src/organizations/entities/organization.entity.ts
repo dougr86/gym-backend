@@ -1,4 +1,4 @@
-import { AuditableEntity } from 'src/common/auditable.entity';
+import { AuditableEntity } from 'src/common/entities/auditable.entity';
 import { LocationEntity } from 'src/locations/entities/location.entity';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';

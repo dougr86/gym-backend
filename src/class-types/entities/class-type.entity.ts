@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { OrganizationEntity } from 'src/organizations/entities/organization.entity';
-import { AuditableEntity } from 'src/common/auditable.entity';
+import { AuditableEntity } from 'src/common/entities/auditable.entity';
 
 @Entity('class_types')
 export class ClassTypeEntity extends AuditableEntity {
@@ -24,6 +24,15 @@ export class ClassTypeEntity extends AuditableEntity {
 
   @Column({ nullable: true })
   intensity: string; // e.g., "Beginner", "High Intensity", "Recovery"
+
+  @Column({ name: 'requires_booking', default: false })
+  requiresBooking: boolean; // false = Yoga style, true = Pilates style
+
+  @Column({ name: 'allow_waitlist', default: false })
+  allowWaitlist: boolean;
+
+  @Column({ name: 'default_max_capacity', default: 20 })
+  defaultMaxCapacity: number;
 
   @Column({ name: 'organization_id' })
   organizationId: string;
