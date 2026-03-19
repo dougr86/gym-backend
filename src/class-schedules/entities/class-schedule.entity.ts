@@ -27,11 +27,14 @@ export class ClassScheduleEntity extends AuditableEntity {
 
   // The link to the "Parent" rule
   @Column({ name: 'config_id', nullable: true })
-  configId: string;
+  configId: string | null;
 
-  @ManyToOne(() => ScheduleConfigurationEntity, { onDelete: 'CASCADE' })
+  @ManyToOne(() => ScheduleConfigurationEntity, {
+    onDelete: 'SET NULL', // Protects history when the rule is deleted
+    nullable: true,
+  })
   @JoinColumn({ name: 'config_id' })
-  configuration: ScheduleConfigurationEntity;
+  configuration: ScheduleConfigurationEntity | null;
 
   @Column({ name: 'class_type_id' })
   classTypeId: string;
@@ -64,6 +67,9 @@ export class ClassScheduleEntity extends AuditableEntity {
 
   @Column({ type: 'int' })
   maxCapacity: number;
+
+  @Column({ name: 'current_occupancy', default: 0 })
+  currentOccupancy: number;
 
   @Column({
     type: 'enum',
