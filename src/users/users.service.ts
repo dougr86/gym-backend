@@ -137,12 +137,12 @@ export class UsersService {
   }
 
   async findOneByEmailInternal(email: string) {
-    const queryOptions: FindOneOptions<UserEntity> = {
-      where: { email },
-      relations: ['organization'],
-    };
-
-    const user = await this.usersRepository.findOne(queryOptions);
+    const user = await this.usersRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.organization', 'organization')
+      .where('user.email = :email', { email })
+      .addSelect('user.password')
+      .getOne();
 
     if (!user) {
       throw new NotFoundException(

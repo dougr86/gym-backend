@@ -8,6 +8,7 @@ import { LocationsModule } from './locations/locations.module';
 import { RoomsModule } from './rooms/rooms.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { MailModule } from './mail/mail.module';
+import { ClassTypesModule } from './class-types/class-types.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { MailModule } from './mail/mail.module';
     LocationsModule,
     RoomsModule,
     MailModule,
+    ClassTypesModule,
   ],
   providers: [
     {
