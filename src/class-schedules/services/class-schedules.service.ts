@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan, Between } from 'typeorm';
@@ -55,8 +52,8 @@ export class ClassSchedulesService {
 
     const capacity = await this.resolveRoomCapacity(config);
 
-    const today = startOfDay(new Date()) as Date;
-    const horizon = addDays(today, 30) as Date;
+    const today = startOfDay(new Date());
+    const horizon = addDays(today, 30);
     let checkDate: Date = new Date(config.startDate);
 
     const stopDate =
@@ -82,7 +79,7 @@ export class ClassSchedulesService {
           isSpecialEvent: false,
         });
       }
-      checkDate = addDays(checkDate, 1) as Date;
+      checkDate = addDays(checkDate, 1);
     }
 
     if (instances.length > 0) {

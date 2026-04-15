@@ -121,4 +121,35 @@ export class BookingsService {
       await queryRunner.release();
     }
   }
+
+  async findAllByUser(authUser: ActiveUser) {
+    return await this.bookingRepo.find({
+      where: {
+        userId: authUser.userId,
+        organizationId: authUser.organizationId,
+      },
+      relations: ['schedule', 'schedule.classType', 'schedule.room'],
+      order: { schedule: { startTime: 'ASC' } },
+    });
+  }
+
+  async findRosterBySchedule(authUser: ActiveUser, scheduleId: string) {
+    // First, verify the schedule belongs to the organization
+    const schedule = await this.scheduleRepo.findOne({
+      where: { id: scheduleId, organizationId: authUser.organizationId },
+    });
+
+    if (!schedule) {
+      throw new NotFoundException('Schedule not found');
+    }
+
+    return await this.bookingRepo.find({
+      where: {
+        scheduleId,
+        organizationId: authUser.organizationId,
+        status: BookingStatus.RESERVED, // Usually only show active reservations
+      },
+      relations: ['user'], // Get student names/profiles
+    });
+  }
 }

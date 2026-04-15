@@ -5,6 +5,7 @@ import {
   Delete,
   Param,
   UseGuards,
+  Get,
 } from '@nestjs/common';
 import { BookingsService } from '../services/bookings.service';
 import { CreateBookingDto } from '../dto/create-booking.dto';
@@ -28,5 +29,20 @@ export class BookingsController {
   @Delete(':id')
   cancel(@GetUser() authUser: ActiveUser, @Param('id') id: string) {
     return this.bookingsService.cancel(authUser, id);
+  }
+
+  @Get('my-bookings')
+  @Roles(UserRole.STUDENT)
+  findAllMyBookings(@GetUser() authUser: ActiveUser) {
+    return this.bookingsService.findAllByUser(authUser);
+  }
+
+  @Get('schedule/:scheduleId')
+  @Roles(UserRole.INSTRUCTOR)
+  findRosterBySchedule(
+    @GetUser() authUser: ActiveUser,
+    @Param('scheduleId') scheduleId: string,
+  ) {
+    return this.bookingsService.findRosterBySchedule(authUser, scheduleId);
   }
 }
