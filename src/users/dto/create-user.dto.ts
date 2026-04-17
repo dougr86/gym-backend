@@ -52,4 +52,6 @@ export class CreateUserDto {
   @IsString() @IsOptional() city?: string;
   @IsString() @IsOptional() stateProvince?: string;
   @IsString() @IsOptional() postalCode?: string;
+  @IsString() @IsOptional() avatarUrl?: string;
+  @IsString() @IsOptional() preferredLanguage?: string;
 }

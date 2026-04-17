@@ -47,7 +47,7 @@ export class AuthService {
       org: user.organization.id,
     };
     return {
-      access_token: await this.jwtService.signAsync(payload),
+      accessToken: await this.jwtService.signAsync(payload),
       mustChangePassword: user.mustChangePassword,
       user: {
         id: user.id,
@@ -57,6 +57,8 @@ export class AuthService {
         fullName: user.fullName,
         role: user.role,
         countryCode: user.countryCode,
+        avatarUrl: user.avatarUrl,
+        preferredLanguage: user.preferredLanguage,
       },
     };
   }
