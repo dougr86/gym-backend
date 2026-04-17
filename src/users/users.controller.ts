@@ -55,6 +55,33 @@ export class UsersController {
     return { message: 'Account activated successfully. You can now log in.' };
   }
 
+  @Patch('change-password')
+  async changePassword(
+    @GetUser() authUser: ActiveUser,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    await this.usersService.changePassword(authUser, dto);
+    return { message: 'Password updated successfully' };
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body('email') email: string) {
+    await this.usersService.forgotPassword(email);
+    return; // Returns 200/201 No Content
+  }
+
+  @Public()
+  @Post('reset-password')
+  async resetPassword(
+    @Body('token') token: string,
+    @Body('password') password: string,
+  ) {
+    await this.usersService.resetPasswordWithToken(token, password);
+    return { message: 'Password has been reset' };
+  }
+
   @Get('/emails/:email')
   @Roles(UserRole.ASSISTANT)
   async findOneByEmail(
@@ -110,15 +137,6 @@ export class UsersController {
     return await this.usersService.deactivate(authUser, id);
   }
 
-  @Patch('change-password')
-  async changePassword(
-    @GetUser() authUser: ActiveUser,
-    @Body() dto: ChangePasswordDto,
-  ) {
-    await this.usersService.changePassword(authUser, dto);
-    return { message: 'Password updated successfully' };
-  }
-
   @Post(':id/resend-invitation')
   @Roles(UserRole.ASSISTANT)
   async resend(
@@ -126,24 +144,6 @@ export class UsersController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return await this.usersService.resendInvitation(authUser, id);
-  }
-
-  @Public()
-  @Post('forgot-password')
-  @HttpCode(HttpStatus.OK)
-  async forgotPassword(@Body('email') email: string) {
-    await this.usersService.forgotPassword(email);
-    return; // Returns 200/201 No Content
-  }
-
-  @Public()
-  @Post('reset-password')
-  async resetPassword(
-    @Body('token') token: string,
-    @Body('password') password: string,
-  ) {
-    await this.usersService.resetPasswordWithToken(token, password);
-    return { message: 'Password has been reset' };
   }
 
   @Patch(':id/admin-reset-password')

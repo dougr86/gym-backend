@@ -17,6 +17,13 @@ export enum UserStatus {
   PENDING = 'pending',
 }
 
+export enum UserGender {
+  MALE = 'MALE',
+  FEMALE = 'FEMALE',
+  OTHER = 'OTHER',
+  PREFER_NOT_TO_SAY = 'PREFER_NOT_TO_SAY',
+}
+
 @Entity('users')
 export class UserEntity extends AuditableEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -34,6 +41,13 @@ export class UserEntity extends AuditableEntity {
 
   @Column({ type: 'enum', enum: UserStatus, default: UserStatus.ACTIVE })
   status: UserStatus;
+
+  @Column({
+    type: 'enum',
+    enum: UserGender,
+    default: UserGender.PREFER_NOT_TO_SAY,
+  })
+  gender: UserGender;
 
   @Column({ name: 'government_id', nullable: true })
   governmentId: string;
@@ -79,8 +93,8 @@ export class UserEntity extends AuditableEntity {
   @Column({ name: 'phone_number', type: 'varchar', length: 20, nullable: true })
   phoneNumber: string; // e.g. '+12125551234'
 
-  @Column({ name: 'avatar_url', nullable: true })
-  avatarUrl: string;
+  @Column({ name: 'avatar_url', type: 'varchar', length: 255, nullable: true })
+  avatarUrl: string | null;
 
   // Use standard IANA timezone strings (e.g., 'UTC', 'America/New_York')
   @Column({ default: 'UTC' })

@@ -9,6 +9,7 @@ import {
   IsPhoneNumber,
 } from 'class-validator';
 import { UserRole } from 'src/auth/constants/role.constants';
+import { UserGender } from '../entities/user.entity';
 
 export class CreateUserDto {
   @IsEmail()
@@ -47,11 +48,15 @@ export class CreateUserDto {
   @IsOptional()
   phoneNumber?: string; // Expects E.164 format like '+50688888888'
 
+  @IsEnum(UserGender)
+  @IsOptional()
+  gender?: UserGender;
+
   @IsString() @IsOptional() addressLine1?: string;
   @IsString() @IsOptional() addressLine2?: string;
   @IsString() @IsOptional() city?: string;
   @IsString() @IsOptional() stateProvince?: string;
   @IsString() @IsOptional() postalCode?: string;
-  @IsString() @IsOptional() avatarUrl?: string;
+  @IsString() @IsOptional() avatarUrl?: string | null;
   @IsString() @IsOptional() preferredLanguage?: string;
 }
