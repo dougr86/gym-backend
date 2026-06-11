@@ -183,17 +183,6 @@ export class UsersService {
     return user;
   }
 
-  async findAllV0(authUser: ActiveUser) {
-    if (authUser.role === UserRole.SUPER_ADMIN) {
-      return await this.usersRepository.find({ relations: ['organization'] });
-    }
-
-    // 2. Otherwise, strictly filter by the user's organization
-    return await this.usersRepository.find({
-      where: { organization: { id: authUser.organizationId } },
-    });
-  }
-
   async findAll(
     authUser: ActiveUser,
     pageInfo: PageInfo,
@@ -211,6 +200,8 @@ export class UsersService {
         organizationId: authUser.organizationId,
       });
     }
+
+    queryBuilder.addSelect('user.createdAt');
 
     // 2. generic pagination
     applyPagination(queryBuilder, pageInfo, 'user');
