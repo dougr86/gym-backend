@@ -17,6 +17,10 @@ import { ChangePasswordDto } from './dto/change-pass.dto';
 import { OnboardUserDto } from './dto/onboard-user.dto';
 import { MailService } from 'src/mail/mail.service';
 import { InviteUserDto } from './dto/invite-user.dto';
+import { PageInfo } from 'src/common/dto/page-info.dto';
+import { UserFilterDto } from './dto/user-filter.dto';
+import { PaginatedData } from 'src/common/interfaces/paginated-data.interface';
+import { applyPagination } from 'src/common/utils/pagination.util';
 
 @Injectable()
 export class UsersService {
@@ -179,7 +183,7 @@ export class UsersService {
     return user;
   }
 
-  async findAll(authUser: ActiveUser) {
+  async findAllV0(authUser: ActiveUser) {
     if (authUser.role === UserRole.SUPER_ADMIN) {
       return await this.usersRepository.find({ relations: ['organization'] });
     }
@@ -188,6 +192,53 @@ export class UsersService {
     return await this.usersRepository.find({
       where: { organization: { id: authUser.organizationId } },
     });
+  }
+
+  async findAll(
+    authUser: ActiveUser,
+    pageInfo: PageInfo,
+    filters: UserFilterDto,
+  ): Promise<PaginatedData<UserEntity>> {
+    const queryBuilder = this.usersRepository.createQueryBuilder('user');
+
+    // 1. Multi-Tenancy Security Boundaries
+    if (authUser.role === UserRole.SUPER_ADMIN) {
+      // Super admins see everything + their organization details
+      queryBuilder.leftJoinAndSelect('user.organization', 'organization');
+    } else {
+      // Regular admins/staff are strictly trapped within their own organization
+      queryBuilder.andWhere('user.organizationId = :organizationId', {
+        organizationId: authUser.organizationId,
+      });
+    }
+
+    // 2. generic pagination
+    applyPagination(queryBuilder, pageInfo, 'user');
+
+    // 3. Isolated Domain Filters
+    if (filters.search?.trim()) {
+      const cleanedSearch = `%${filters.search.trim()}%`;
+      queryBuilder.andWhere(
+        "(user.email ILIKE :search OR user.firstName ILIKE :search OR user.lastName ILIKE :search OR CONCAT(user.firstName, ' ', user.lastName) ILIKE :search)",
+        { search: cleanedSearch },
+      );
+    }
+
+    if (filters.roles && filters.roles.length > 0) {
+      queryBuilder.andWhere('user.role IN (:...roles)', {
+        roles: filters.roles,
+      });
+    }
+
+    if (filters.statuses && filters.statuses.length > 0) {
+      queryBuilder.andWhere('user.status IN (:...statuses)', {
+        statuses: filters.statuses,
+      });
+    }
+
+    const [items, total] = await queryBuilder.getManyAndCount();
+
+    return new PaginatedData(items, pageInfo.page, pageInfo.size, total);
   }
 
   async update(authUser: ActiveUser, id: string, updateUserDto: UpdateUserDto) {

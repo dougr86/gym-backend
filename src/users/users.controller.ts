@@ -11,6 +11,7 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -24,6 +25,7 @@ import { ChangePasswordDto } from './dto/change-pass.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { OnboardUserDto } from './dto/onboard-user.dto';
 import { InviteUserDto } from './dto/invite-user.dto';
+import { GetUsersQueryDto } from './dto/get-users-query.dto';
 
 @Controller('users')
 @UseGuards(RolesGuard)
@@ -105,8 +107,11 @@ export class UsersController {
 
   @Get()
   @Roles(UserRole.ASSISTANT)
-  async findAll(@GetUser() authUser: ActiveUser) {
-    return await this.usersService.findAll(authUser);
+  async findAll(
+    @GetUser() authUser: ActiveUser,
+    @Query() query: GetUsersQueryDto,
+  ) {
+    return await this.usersService.findAll(authUser, query, query);
   }
 
   @Roles(UserRole.ASSISTANT)
