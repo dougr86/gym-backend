@@ -52,16 +52,22 @@ export class UserEntity extends AuditableEntity {
   @Column({ name: 'government_id', nullable: true })
   governmentId: string;
 
-  @Column({ name: 'first_name' })
-  firstName: string;
+  @Column({ type: 'varchar', name: 'first_name', nullable: true })
+  firstName: string | null;
 
-  @Column({ name: 'last_name' })
-  lastName: string;
+  @Column({ type: 'varchar', name: 'last_name', nullable: true })
+  lastName: string | null;
 
   @Expose()
   get fullName(): string {
-    return `${this.firstName} ${this.lastName}`;
+    if (!this.firstName && !this.lastName) {
+      return this.email;
+    }
+    return `${this.firstName} ${this.lastName}`.trim();
   }
+
+  @Column({ name: 'date_of_birth', type: 'date', nullable: true })
+  dateOfBirth: Date | string | null;
 
   @Column({ name: 'organization_id' })
   organizationId: string;

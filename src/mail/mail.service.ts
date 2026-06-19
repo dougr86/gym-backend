@@ -1,4 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import type Mail from 'nodemailer/lib/mailer'; // Import the internal Mail type
@@ -41,13 +45,6 @@ export class MailService {
   }
 
   private async send(to: string, subject: string, html: string) {
-    console.log('from', to);
-    console.log('subject', subject);
-    console.log('html', html);
-    const t1 = this.configService.get<string>('MAIL_USER');
-    const t2 = this.configService.get<string>('MAIL_PASS');
-    console.log('MAIL_USER', t1);
-    console.log('MAIL_PASS', t2);
     try {
       await this.transporter.sendMail({
         from: `"Gym Admin" <${this.configService.get('MAIL_USER')}>`,
@@ -57,7 +54,8 @@ export class MailService {
       });
     } catch (error) {
       // Log error but don't crash the app
-      console.error('Email failed to send:', error);
+      this.logger.error(`Error sending email to [${to}]:`, error);
+      throw new InternalServerErrorException('Error sending email ');
     }
   }
 }

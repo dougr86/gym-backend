@@ -3,7 +3,7 @@ import {
   MinLength,
   IsOptional,
   IsPhoneNumber,
-  IsISO31661Alpha2,
+  IsDateString,
 } from 'class-validator';
 
 export class OnboardUserDto {
@@ -11,16 +11,24 @@ export class OnboardUserDto {
   invitationToken: string;
 
   @IsString()
+  firstName: string;
+
+  @IsString()
+  lastName: string;
+
+  @IsString()
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
   password: string;
+
+  @IsDateString(
+    {},
+    { message: 'Date of birth must be a valid ISO date string' },
+  )
+  dateOfBirth: string;
 
   @IsString()
   @IsOptional()
   governmentId: string;
-
-  @IsISO31661Alpha2()
-  @IsOptional()
-  countryCode?: string;
 
   @IsPhoneNumber()
   @IsOptional()

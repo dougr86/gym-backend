@@ -51,10 +51,16 @@ export class UsersController {
   }
 
   @Public()
-  @Post('onboard')
-  async onboard(@Body() dto: OnboardUserDto) {
+  @Post('onboarding')
+  async onboarding(@Body() dto: OnboardUserDto) {
     await this.usersService.completeOnboarding(dto);
     return { message: 'Account activated successfully. You can now log in.' };
+  }
+
+  @Public() // 👈 Bypasses global auth barriers so invited guests can verify their link
+  @Get('invite-profile/:token')
+  async getInviteProfile(@Param('token') token: string) {
+    return await this.usersService.findByInvitationToken(token);
   }
 
   @Patch('change-password')
@@ -100,7 +106,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  @Roles(UserRole.INSTRUCTOR)
+  @Roles(UserRole.STUDENT)
   async findOne(@GetUser() authUser: ActiveUser, @Param('id') id: string) {
     return await this.usersService.findOne(authUser, id);
   }
@@ -114,7 +120,7 @@ export class UsersController {
     return await this.usersService.findAll(authUser, query, query);
   }
 
-  @Roles(UserRole.ASSISTANT)
+  @Roles(UserRole.STUDENT)
   @Patch(':id')
   async update(
     @GetUser() authUser: ActiveUser,
@@ -126,6 +132,7 @@ export class UsersController {
 
   @Roles(UserRole.ADMIN)
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async delete(
     @GetUser() authUser: ActiveUser,
     @Param('id', ParseUUIDPipe) id: string,

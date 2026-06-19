@@ -13,13 +13,11 @@ import {
   ClassSchedulesService,
   BookingsService,
 } from './index';
-import { ScheduleModule } from '@nestjs/schedule';
 import { ScheduleCronService } from './services/schedule-cron-service';
 import { RoomEntity } from 'src/rooms/entities/room.entity';
 
 @Module({
   imports: [
-    ScheduleModule.forRoot(),
     TypeOrmModule.forFeature([
       ScheduleConfigurationEntity,
       ClassScheduleEntity,

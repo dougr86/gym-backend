@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -21,6 +22,7 @@ import { PageInfo } from 'src/common/dto/page-info.dto';
 import { UserFilterDto } from './dto/user-filter.dto';
 import { PaginatedData } from 'src/common/interfaces/paginated-data.interface';
 import { applyPagination } from 'src/common/utils/pagination.util';
+import { OrganizationEntity } from 'src/organizations/entities/organization.entity';
 
 @Injectable()
 export class UsersService {
@@ -28,6 +30,8 @@ export class UsersService {
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
     private mailService: MailService,
+    @InjectRepository(OrganizationEntity)
+    private organizationsRepository: Repository<OrganizationEntity>,
   ) {}
 
   // Used by Admin/Assistant to register a new member
@@ -58,34 +62,70 @@ export class UsersService {
   }
 
   async inviteUser(authUser: ActiveUser, userData: InviteUserDto) {
-    // Password is required in the entity, so we create a ghost one
-    const ghostPassword = this.generateRandomString(16);
-    const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(ghostPassword, salt);
+    const savedUsers: UserEntity[] = [];
 
-    const token = this.generateRandomString(32);
-
-    const user = this.usersRepository.create({
-      ...userData,
-      email: userData.email.toLowerCase(),
-      password: hashedPassword,
-      status: UserStatus.PENDING,
-      invitationToken: token,
-      invitationExpiresAt: this.getExpiryDate(20), // 20 mins
-      mustChangePassword: true,
-      organizationId: authUser.organizationId,
-      createdBy: authUser.userId,
+    const organization = await this.organizationsRepository.findOne({
+      where: { id: authUser.organizationId },
+      select: ['id', 'name', 'countryCode'], // Only pull fields we actually need
     });
 
-    const savedUser = await this.usersRepository.save(user);
+    if (!organization) {
+      throw new NotFoundException(`Associated tenant organization not found`);
+    }
 
-    await this.mailService.sendInvitation(
-      savedUser.email,
-      token,
-      'Your Gym App', // Replace with authUser.organization.name if loaded
-    );
+    const countryCode = organization.countryCode;
+    const gymName = organization.name || 'Your Gym App';
 
-    return savedUser;
+    const cleanEmails = userData.emails.map((email) => email.toLowerCase());
+
+    const existingUsers = await this.usersRepository
+      .createQueryBuilder('user')
+      .where('LOWER(user.email) IN (:...emails)', { emails: cleanEmails })
+      .select(['user.id', 'user.email'])
+      .getMany();
+
+    if (existingUsers.length > 0) {
+      const duplicateEmails = existingUsers.map((u) => u.email).join(', ');
+      throw new ConflictException(
+        `The following email address(es) are already registered in the system: ${duplicateEmails}`,
+      );
+    }
+
+    // Loop through the validated email array batch
+    for (const rawEmail of userData.emails) {
+      const cleanEmail = rawEmail.toLowerCase();
+
+      // 1. Password is required in the entity, so we create a ghost one per user record
+      const ghostPassword = this.generateRandomString(16);
+      const salt = await bcrypt.genSalt();
+      const hashedPassword = await bcrypt.hash(ghostPassword, salt);
+
+      // 2. Generate a unique cryptographically isolated initialization key
+      const token = this.generateRandomString(32);
+
+      // 3. Assemble and map individual transactional properties
+      const user = this.usersRepository.create({
+        email: cleanEmail,
+        role: userData.role,
+        password: hashedPassword,
+        status: UserStatus.PENDING,
+        invitationToken: token,
+        invitationExpiresAt: this.getExpiryDate(60), // 20 mins
+        mustChangePassword: true,
+        organizationId: authUser.organizationId,
+        countryCode: countryCode,
+        createdBy: authUser.userId,
+      });
+
+      const savedUser = await this.usersRepository.save(user);
+      savedUsers.push(savedUser);
+
+      // 4. Dispatch the contextual notification pipeline inside the loop context
+      await this.mailService.sendInvitation(savedUser.email, token, gymName);
+    }
+
+    // Returns the complete array records back to the calling controller hook
+    return savedUsers;
   }
 
   async completeOnboarding(dto: OnboardUserDto) {
@@ -235,6 +275,16 @@ export class UsersService {
   async update(authUser: ActiveUser, id: string, updateUserDto: UpdateUserDto) {
     const user = await this.findOne(authUser, id);
 
+    if (
+      (authUser.role === UserRole.INSTRUCTOR ||
+        authUser.role === UserRole.STUDENT) &&
+      authUser.userId !== id
+    ) {
+      throw new ForbiddenException(
+        'You are only authorized to modify your own user profile data.',
+      );
+    }
+
     // If the authUser is not a Super Admin, they cannot change roles to Super Admin
     if (
       authUser.role !== UserRole.SUPER_ADMIN &&
@@ -259,10 +309,16 @@ export class UsersService {
   async remove(authUser: ActiveUser, id: string) {
     const user = await this.findOne(authUser, id);
 
-    // Track who did it
-    user.deletedBy = authUser.userId;
+    // If the invitation is still PENDING, completely wipe it from the database
+    if (user.status === UserStatus.PENDING) {
+      await this.usersRepository.delete(id);
+      return;
+    }
 
-    return await this.usersRepository.softRemove(user);
+    // Otherwise (ACTIVE, INACTIVE, PAUSED) soft delete
+    user.deletedBy = authUser.userId;
+    await this.usersRepository.softRemove(user);
+    return;
   }
 
   async deactivate(authUser: ActiveUser, id: string) {
@@ -428,5 +484,39 @@ export class UsersService {
     const expiryDate = new Date();
     expiryDate.setMinutes(expiryDate.getMinutes() + minutes);
     return expiryDate;
+  }
+
+  /**
+   * Public Pre-flight Invitation Verification
+   * Fetches minimized tenant metadata by invitation token to verify validity
+   * before allowing the user to initiate the onboarding form wizard.
+   */
+  async findByInvitationToken(token: string) {
+    const user = await this.usersRepository.findOne({
+      where: {
+        invitationToken: token,
+        status: UserStatus.PENDING,
+        invitationExpiresAt: MoreThan(new Date()), // Ensures the token window is still open
+      },
+      relations: ['organization'],
+      select: {
+        id: true,
+        email: true,
+        countryCode: true,
+        organization: {
+          id: true,
+          name: true,
+        },
+      },
+    });
+
+    // If no record matches or it has expired, fail immediately
+    if (!user) {
+      throw new BadRequestException(
+        'The invitation token is invalid or has expired.',
+      );
+    }
+
+    return user;
   }
 }

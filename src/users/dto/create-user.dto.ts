@@ -7,6 +7,7 @@ import {
   IsUUID,
   IsISO31661Alpha2,
   IsPhoneNumber,
+  IsDateString,
 } from 'class-validator';
 import { UserRole } from 'src/auth/constants/role.constants';
 import { UserGender } from '../entities/user.entity';
@@ -28,6 +29,12 @@ export class CreateUserDto {
 
   @IsString()
   lastName: string;
+
+  @IsDateString(
+    {},
+    { message: 'Date of birth must be a valid ISO date string' },
+  )
+  dateOfBirth: string;
 
   // We make role optional here because the Service
   // will often force it to 'STUDENT' or 'OWNER'

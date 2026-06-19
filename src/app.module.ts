@@ -10,9 +10,11 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { MailModule } from './mail/mail.module';
 import { ClassTypesModule } from './class-types/class-types.module';
 import { ClassSchedulesModule } from './class-schedules/class-schedules.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     // 1. Load the ConfigModule FIRST
     ConfigModule.forRoot({
       isGlobal: true, // Makes it available everywhere
