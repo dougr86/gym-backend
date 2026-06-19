@@ -66,8 +66,8 @@ export class UserEntity extends AuditableEntity {
     return `${this.firstName} ${this.lastName}`.trim();
   }
 
-  @Column({ name: 'date_of_birth', type: 'date', nullable: true })
-  dateOfBirth: Date | string | null;
+  @Column({ name: 'birth_date', type: 'date', nullable: true })
+  birthDate: Date | string | null;
 
   @Column({ name: 'organization_id' })
   organizationId: string;

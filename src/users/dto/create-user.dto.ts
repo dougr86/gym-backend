@@ -34,7 +34,7 @@ export class CreateUserDto {
     {},
     { message: 'Date of birth must be a valid ISO date string' },
   )
-  dateOfBirth: string;
+  birthDate: string;
 
   // We make role optional here because the Service
   // will often force it to 'STUDENT' or 'OWNER'

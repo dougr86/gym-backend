@@ -4,7 +4,9 @@ import {
   IsOptional,
   IsPhoneNumber,
   IsDateString,
+  IsEnum,
 } from 'class-validator';
+import { UserGender } from '../entities/user.entity';
 
 export class OnboardUserDto {
   @IsString()
@@ -24,7 +26,7 @@ export class OnboardUserDto {
     {},
     { message: 'Date of birth must be a valid ISO date string' },
   )
-  dateOfBirth: string;
+  birthDate: string;
 
   @IsString()
   @IsOptional()
@@ -34,9 +36,14 @@ export class OnboardUserDto {
   @IsOptional()
   phoneNumber?: string;
 
+  @IsEnum(UserGender)
+  @IsOptional()
+  gender?: UserGender;
+
   @IsString() @IsOptional() addressLine1?: string;
   @IsString() @IsOptional() addressLine2?: string;
   @IsString() @IsOptional() city?: string;
   @IsString() @IsOptional() stateProvince?: string;
   @IsString() @IsOptional() postalCode?: string;
+  @IsString() @IsOptional() preferredLanguage?: string;
 }
