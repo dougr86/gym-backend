@@ -48,7 +48,6 @@ export class AuthService {
     };
     return {
       accessToken: await this.jwtService.signAsync(payload),
-      mustChangePassword: user.mustChangePassword,
       user: {
         id: user.id,
         email: user.email,
@@ -59,6 +58,7 @@ export class AuthService {
         countryCode: user.countryCode,
         avatarUrl: user.avatarUrl,
         preferredLanguage: user.preferredLanguage,
+        mustChangePassword: user.mustChangePassword,
       },
     };
   }
