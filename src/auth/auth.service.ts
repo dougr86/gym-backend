@@ -60,6 +60,16 @@ export class AuthService {
         preferredLanguage: user.preferredLanguage,
         mustChangePassword: user.mustChangePassword,
       },
+      organization: user.organization
+        ? {
+            id: user.organization.id,
+            name: user.organization.name,
+            status: user.organization.status,
+            plan: user.organization.plan,
+            currency: user.organization.currency,
+            countryCode: user.organization.countryCode,
+          }
+        : null,
     };
   }
 }
