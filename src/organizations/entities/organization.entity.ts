@@ -1,7 +1,14 @@
 import { AuditableEntity } from 'src/common/entities/auditable.entity';
 import { LocationEntity } from 'src/locations/entities/location.entity';
 import { UserEntity } from 'src/users/entities/user.entity';
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  OneToOne,
+} from 'typeorm';
+import { OrganizationSettingsEntity } from './organization-settings.entity';
 
 export enum OrgStatus {
   ACTIVE = 'active',
@@ -69,6 +76,12 @@ export class OrganizationEntity extends AuditableEntity {
 
   @Column({ name: 'tax_id', nullable: true })
   taxId: string;
+
+  @OneToOne(
+    () => OrganizationSettingsEntity,
+    (settings) => settings.organization,
+  )
+  settings: OrganizationSettingsEntity;
 
   // We define this relationship so we can see all users belonging to an Org
   @OneToMany(() => UserEntity, (user) => user.organization)

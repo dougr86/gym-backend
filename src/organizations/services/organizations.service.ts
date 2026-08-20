@@ -5,15 +5,15 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateOrganizationDto } from './dto/create-organization.dto';
-import { UpdateOrganizationDto } from './dto/update-organization.dto';
+import { CreateOrganizationDto } from '../dto/create-organization.dto';
+import { UpdateOrganizationDto } from '../dto/update-organization.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { OrganizationEntity, OrgStatus } from './entities/organization.entity';
+import { OrganizationEntity, OrgStatus } from '../entities/organization.entity';
 import { UserEntity, UserStatus } from 'src/users/entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { UserRole } from 'src/auth/constants/role.constants';
-import { TransferOwnershipDto } from './dto/transfer-ownership.dto';
+import { TransferOwnershipDto } from '../dto/transfer-ownership.dto';
 import { ActiveUser } from 'src/auth/interfaces/active-user.interface';
 
 @Injectable()
